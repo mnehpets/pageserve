@@ -6,7 +6,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/mnehpets/fs v0.3.0
 	github.com/mnehpets/http v0.5.0
-	github.com/mnehpets/page v0.3.0
+	github.com/mnehpets/page v0.4.0
 	github.com/zserge/metric v0.1.0
 	gopkg.in/yaml.v3 v3.0.1
 )
