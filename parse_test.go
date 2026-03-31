@@ -22,7 +22,8 @@ func writeConfig(t *testing.T, content string) string {
 
 const minimalConfig = `
 server:
-  address: ":8080"
+  listeners:
+    - address: ":8080"
 session:
   cookie_name: sess
   keys:
@@ -37,8 +38,8 @@ func TestParse_MinimalConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse: %v", err)
 	}
-	if cfg.Server.Address != ":8080" {
-		t.Errorf("Server.Address = %q, want %q", cfg.Server.Address, ":8080")
+	if len(cfg.Server.Listeners) != 1 || cfg.Server.Listeners[0].Address != ":8080" {
+		t.Errorf("Server.Listeners = %v, want [{:8080}]", cfg.Server.Listeners)
 	}
 	if cfg.Session.CookieName != "sess" {
 		t.Errorf("Session.CookieName = %q, want %q", cfg.Session.CookieName, "sess")
@@ -54,7 +55,8 @@ func TestParse_MinimalConfig(t *testing.T) {
 func TestParse_SecretResolution(t *testing.T) {
 	yaml := `
 server:
-  address: ":8080"
+  listeners:
+    - address: ":8080"
 oauth:
   providers:
     - provider: google
@@ -107,7 +109,8 @@ func TestParse_SecretEnvNotPresent_ValueEmpty(t *testing.T) {
 func TestParse_RawNodesAttachedToRoutes(t *testing.T) {
 	yaml := `
 server:
-  address: ":8080"
+  listeners:
+    - address: ":8080"
 session:
   cookie_name: sess
   keys:
@@ -139,7 +142,12 @@ routes:
 func TestParse_AllSections(t *testing.T) {
 	yaml := `
 server:
-  address: ":9090"
+  listeners:
+    - address: ":9090"
+    - address: ":9443"
+      tls:
+        cert_file: /etc/tls/cert.pem
+        key_file:  /etc/tls/key.pem
 oauth:
   providers:
     - provider: google
@@ -167,6 +175,16 @@ routes:
 	cfg, err := parse(path, map[string]string{"CS": "s", "KEY": b64("k")})
 	if err != nil {
 		t.Fatalf("parse: %v", err)
+	}
+	if len(cfg.Server.Listeners) != 2 {
+		t.Fatalf("len(Server.Listeners) = %d, want 2", len(cfg.Server.Listeners))
+	}
+	if cfg.Server.Listeners[0].Address != ":9090" || cfg.Server.Listeners[0].TLS != nil {
+		t.Errorf("Listeners[0] = %+v, want plain :9090", cfg.Server.Listeners[0])
+	}
+	l1 := cfg.Server.Listeners[1]
+	if l1.Address != ":9443" || l1.TLS == nil || l1.TLS.CertFile != "/etc/tls/cert.pem" || l1.TLS.KeyFile != "/etc/tls/key.pem" {
+		t.Errorf("Listeners[1] = %+v, want TLS :9443", l1)
 	}
 	if cfg.Site.BaseURL != "https://example.com" {
 		t.Errorf("Site.BaseURL = %q", cfg.Site.BaseURL)
@@ -202,7 +220,8 @@ func TestParse_HandlerConfigInRaw(t *testing.T) {
 	// they are available via Raw for the handler factory to decode at Build time.
 	yamlDoc := `
 server:
-  address: ":8080"
+  listeners:
+    - address: ":8080"
 session:
   cookie_name: s
   keys:

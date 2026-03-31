@@ -25,9 +25,22 @@ type Config struct {
 	Routes  []RouteConfig           `yaml:"routes"`
 }
 
-// ServerConfig holds the server listen address.
+// ServerConfig holds the server listener configuration.
 type ServerConfig struct {
-	Address string `yaml:"address"`
+	Listeners []ListenerConfig `yaml:"listeners"`
+}
+
+// ListenerConfig describes a single network listener.
+// If TLS is non-nil the listener uses HTTPS; otherwise plain HTTP.
+type ListenerConfig struct {
+	Address string     `yaml:"address"`
+	TLS     *TLSConfig `yaml:"tls,omitempty"`
+}
+
+// TLSConfig holds the certificate and key paths for a TLS listener.
+type TLSConfig struct {
+	CertFile string `yaml:"cert_file"`
+	KeyFile  string `yaml:"key_file"`
 }
 
 // OAuthConfig holds the OAuth provider list.

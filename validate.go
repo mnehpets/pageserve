@@ -25,8 +25,21 @@ func validate(cfg Config, customHandlers map[string]HandlerFactory) error {
 	var errs []string
 
 	// Required fields.
-	if cfg.Server.Address == "" {
-		errs = append(errs, "server.address is required")
+	if len(cfg.Server.Listeners) == 0 {
+		errs = append(errs, "server.listeners: at least one listener is required")
+	}
+	for i, l := range cfg.Server.Listeners {
+		if l.Address == "" {
+			errs = append(errs, fmt.Sprintf("server.listeners[%d]: address is required", i))
+		}
+		if l.TLS != nil {
+			if l.TLS.CertFile == "" {
+				errs = append(errs, fmt.Sprintf("server.listeners[%d].tls: cert_file is required", i))
+			}
+			if l.TLS.KeyFile == "" {
+				errs = append(errs, fmt.Sprintf("server.listeners[%d].tls: key_file is required", i))
+			}
+		}
 	}
 	if cfg.Session.CookieName == "" {
 		errs = append(errs, "session.cookie_name is required")

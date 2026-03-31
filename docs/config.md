@@ -10,7 +10,7 @@ startup from a separate `secrets.env` file (or any other source the caller provi
 
 | Section | Required | Description |
 |---|---|---|
-| `server` | yes | Server listen address |
+| `server` | yes | Network listener configuration |
 | `oauth` | yes (if auth routes exist) | OAuth provider list |
 | `session` | yes (if auth routes exist) | Session cookie configuration |
 | `access` | no | Named email allow-list policies |
@@ -25,12 +25,25 @@ startup from a separate `secrets.env` file (or any other source the caller provi
 
 ```yaml
 server:
-  address: ":8080"   # required — TCP listen address (e.g. ":8080", "0.0.0.0:443")
+  listeners:
+    - address: ":8080"            # plain HTTP
+    - address: ":8443"            # HTTPS
+      tls:
+        cert_file: /path/to/cert.pem
+        key_file:  /path/to/key.pem
 ```
+
+At least one listener is required. Multiple listeners can be declared to serve
+HTTP and HTTPS simultaneously, or on several ports at once. Each listener runs
+in its own goroutine sharing the same handler.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `address` | string | yes | TCP listen address passed to `net.Listen` |
+| `listeners` | list | yes | One or more listener entries |
+| `listeners[].address` | string | yes | TCP listen address (e.g. `":8080"`, `"0.0.0.0:443"`) |
+| `listeners[].tls` | mapping | no | Omit for plain HTTP; set to enable HTTPS |
+| `listeners[].tls.cert_file` | string | yes (if tls) | Path to PEM-encoded TLS certificate |
+| `listeners[].tls.key_file` | string | yes (if tls) | Path to PEM-encoded private key |
 
 ---
 
@@ -323,7 +336,8 @@ No handler-specific fields.
 
 ```yaml
 server:
-  address: ":8080"
+  listeners:
+    - address: ":8080"
 
 oauth:
   providers:

@@ -14,7 +14,7 @@ import (
 // calls (no auth/oauth routes, so OIDC discovery is never triggered).
 func buildableConfig() Config {
 	return Config{
-		Server: ServerConfig{Address: ":8080"},
+		Server: ServerConfig{Listeners: []ListenerConfig{{Address: ":8080"}}},
 		Session: SessionConfig{
 			CookieName: "sess",
 			Keys:       []SessionKey{{ID: "k1", Env: "KEY1", Value: "aaaabbbbccccddddeeeeffffgggghhhh"}}, // 32 bytes
@@ -196,7 +196,7 @@ func TestBuild_FailsOnHandlerValidateError(t *testing.T) {
 
 func TestBuild_ValidationRunsFirst(t *testing.T) {
 	cfg := buildableConfig()
-	cfg.Server.Address = "" // invalid
+	cfg.Server.Listeners = nil // invalid
 	_, err := Build(cfg)
 	if err == nil {
 		t.Fatal("expected Build to fail validation")

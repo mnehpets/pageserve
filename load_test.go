@@ -7,7 +7,8 @@ import (
 
 const validLoadConfig = `
 server:
-  address: ":8080"
+  listeners:
+    - address: ":8080"
 session:
   cookie_name: sess
   keys:
@@ -22,8 +23,8 @@ func TestLoad_ValidConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	if cfg.Server.Address != ":8080" {
-		t.Errorf("Server.Address = %q", cfg.Server.Address)
+	if len(cfg.Server.Listeners) != 1 || cfg.Server.Listeners[0].Address != ":8080" {
+		t.Errorf("Server.Listeners = %v", cfg.Server.Listeners)
 	}
 }
 
@@ -35,7 +36,7 @@ func TestLoad_MissingFile(t *testing.T) {
 }
 
 func TestLoad_MissingRequiredField(t *testing.T) {
-	// No server.address
+	// No server.listeners
 	path := writeConfig(t, `
 session:
   cookie_name: sess
@@ -46,10 +47,10 @@ routes: []
 `)
 	_, err := Load(path, WithEnv(map[string]string{"KEY1": b64("v")}))
 	if err == nil {
-		t.Fatal("expected error for missing server.address")
+		t.Fatal("expected error for missing server.listeners")
 	}
-	if !strings.Contains(err.Error(), "server.address") {
-		t.Errorf("error should mention server.address: %v", err)
+	if !strings.Contains(err.Error(), "server.listeners") {
+		t.Errorf("error should mention server.listeners: %v", err)
 	}
 }
 
@@ -77,7 +78,8 @@ func TestLoad_NoWithEnv_UsesEmptyMap(t *testing.T) {
 func TestLoad_UnknownAccessPolicyRef(t *testing.T) {
 	path := writeConfig(t, `
 server:
-  address: ":8080"
+  listeners:
+    - address: ":8080"
 session:
   cookie_name: sess
   keys:
@@ -101,7 +103,8 @@ routes:
 func TestLoad_UnsupportedOAuthProvider(t *testing.T) {
 	path := writeConfig(t, `
 server:
-  address: ":8080"
+  listeners:
+    - address: ":8080"
 oauth:
   providers:
     - provider: github
@@ -130,9 +133,9 @@ func TestLoad_ReturnedConfigIsMutable(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	// Caller should be able to mutate the config (e.g. CLI flag override).
-	cfg.Server.Address = ":9090"
-	if cfg.Server.Address != ":9090" {
+	// Caller should be able to mutate the config (e.g. programmatic override).
+	cfg.Server.Listeners[0].Address = ":9090"
+	if cfg.Server.Listeners[0].Address != ":9090" {
 		t.Error("config should be mutable after Load")
 	}
 }

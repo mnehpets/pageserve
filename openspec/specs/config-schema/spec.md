@@ -1,11 +1,23 @@
 ## ADDED Requirements
 
-### Requirement: Server address config
-The config SHALL include a top-level `server:` section with an `address:` field specifying the listen address (e.g. `":8080"`).
+### Requirement: Server listeners config
+The config SHALL include a top-level `server:` section with a `listeners:` list. Each entry SHALL have an `address:` field. An optional `tls:` sub-section with `cert_file:` and `key_file:` enables HTTPS for that listener. At least one listener is required. Multiple listeners may be declared to serve HTTP and HTTPS simultaneously or on multiple ports.
 
-#### Scenario: Valid address
-- **WHEN** `server.address` is set to a valid TCP listen address
-- **THEN** the server binds to that address on Build
+#### Scenario: Single plain HTTP listener
+- **WHEN** `server.listeners` contains one entry with no `tls:` field
+- **THEN** the server binds a plain HTTP listener to that address
+
+#### Scenario: HTTPS listener
+- **WHEN** a listener entry includes `tls.cert_file` and `tls.key_file`
+- **THEN** the server binds a TLS listener to that address using those certificate and key files
+
+#### Scenario: Simultaneous HTTP and HTTPS
+- **WHEN** `server.listeners` contains both a plain and a TLS entry
+- **THEN** both listeners start concurrently sharing the same handler
+
+#### Scenario: No listeners
+- **WHEN** `server.listeners` is absent or empty
+- **THEN** Validate returns an error
 
 ### Requirement: OAuth config section
 The config SHALL include a top-level `oauth:` section with a `providers:` list. Each entry SHALL have a `provider:` field naming the provider type (currently only `google` is supported), plus `client_id:` and `client_secret:` (secret field). No callback URL is declared here; it is derived from `site.base_url` and the registered `auth` route path.

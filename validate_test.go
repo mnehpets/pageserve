@@ -10,7 +10,7 @@ import (
 // resolvedConfig returns a Config with all required fields set and secrets resolved.
 func resolvedConfig() Config {
 	return Config{
-		Server: ServerConfig{Address: ":8080"},
+		Server: ServerConfig{Listeners: []ListenerConfig{{Address: ":8080"}}},
 		Session: SessionConfig{
 			CookieName: "sess",
 			Keys:       []SessionKey{{ID: "k1", Env: "KEY1", Value: "secret"}},
@@ -25,11 +25,32 @@ func TestValidate_Valid(t *testing.T) {
 	}
 }
 
-func TestValidate_MissingServerAddress(t *testing.T) {
+func TestValidate_NoListeners(t *testing.T) {
 	cfg := resolvedConfig()
-	cfg.Server.Address = ""
+	cfg.Server.Listeners = nil
 	err := validate(cfg, nil)
-	assertValidationError(t, err, "server.address")
+	assertValidationError(t, err, "server.listeners")
+}
+
+func TestValidate_ListenerMissingAddress(t *testing.T) {
+	cfg := resolvedConfig()
+	cfg.Server.Listeners = []ListenerConfig{{Address: ""}}
+	err := validate(cfg, nil)
+	assertValidationError(t, err, "server.listeners[0]: address is required")
+}
+
+func TestValidate_TLSMissingCertFile(t *testing.T) {
+	cfg := resolvedConfig()
+	cfg.Server.Listeners = []ListenerConfig{{Address: ":8443", TLS: &TLSConfig{KeyFile: "key.pem"}}}
+	err := validate(cfg, nil)
+	assertValidationError(t, err, "cert_file")
+}
+
+func TestValidate_TLSMissingKeyFile(t *testing.T) {
+	cfg := resolvedConfig()
+	cfg.Server.Listeners = []ListenerConfig{{Address: ":8443", TLS: &TLSConfig{CertFile: "cert.pem"}}}
+	err := validate(cfg, nil)
+	assertValidationError(t, err, "key_file")
 }
 
 func TestValidate_MissingCookieName(t *testing.T) {
@@ -127,7 +148,7 @@ func TestValidate_MultipleErrors(t *testing.T) {
 	}
 	// Should report multiple issues in one error.
 	msg := err.Error()
-	for _, want := range []string{"server.address", "session.cookie_name", "session.keys"} {
+	for _, want := range []string{"server.listeners", "session.cookie_name", "session.keys"} {
 		if !strings.Contains(msg, want) {
 			t.Errorf("error missing %q: %s", want, msg)
 		}

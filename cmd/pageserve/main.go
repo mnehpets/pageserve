@@ -1,20 +1,23 @@
 package main
 
 import (
-	"flag"
+	"context"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
+
+	"flag"
 
 	"github.com/joho/godotenv"
 	"github.com/mnehpets/pageserve"
 )
 
 var (
-	addr    = flag.String("addr", "", "listen address ([host]:port); overrides config")
+	addr    = flag.String("addr", "", "override the first listener address (e.g. \":9090\")")
 	secrets = flag.String("secrets", "", "path to secrets.env file (default: secrets.env alongside config)")
 )
 
@@ -51,7 +54,7 @@ func main() {
 	}
 
 	if *addr != "" {
-		cfg.Server.Address = *addr
+		cfg.Server.Listeners[0].Address = *addr
 	}
 
 	srv, err := pageserve.Build(cfg)
@@ -60,8 +63,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	log.Printf("pageserve listening on %s", cfg.Server.Address)
-	if err := http.ListenAndServe(cfg.Server.Address, srv); err != nil {
+	for _, l := range cfg.Server.Listeners {
+		if l.TLS != nil {
+			log.Printf("pageserve listening on %s (https)", l.Address)
+		} else {
+			log.Printf("pageserve listening on %s (http)", l.Address)
+		}
+	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	if err := pageserve.Serve(ctx, cfg, srv); err != nil {
 		fmt.Fprintln(os.Stderr, "pageserve:", err)
 		os.Exit(2)
 	}
