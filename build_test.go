@@ -39,6 +39,18 @@ func rawNode(t *testing.T, kvs map[string]any) *yaml.Node {
 	return &doc
 }
 
+func TestBuild_NoCookieName(t *testing.T) {
+	cfg := buildableConfig()
+	cfg.Session.CookieName = "" // omitted — middleware default applies
+	srv, err := Build(cfg)
+	if err != nil {
+		t.Fatalf("Build with no cookie_name: %v", err)
+	}
+	if srv == nil {
+		t.Fatal("Build returned nil server")
+	}
+}
+
 func TestBuild_EmptyRoutes(t *testing.T) {
 	cfg := buildableConfig()
 	srv, err := Build(cfg)

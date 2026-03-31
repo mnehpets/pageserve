@@ -53,11 +53,12 @@ func TestValidate_TLSMissingKeyFile(t *testing.T) {
 	assertValidationError(t, err, "key_file")
 }
 
-func TestValidate_MissingCookieName(t *testing.T) {
+func TestValidate_EmptyCookieName_IsValid(t *testing.T) {
 	cfg := resolvedConfig()
 	cfg.Session.CookieName = ""
-	err := validate(cfg, nil)
-	assertValidationError(t, err, "session.cookie_name")
+	if err := validate(cfg, nil); err != nil {
+		t.Errorf("empty cookie_name should be valid (middleware default is used): %v", err)
+	}
 }
 
 func TestValidate_NoSessionKeys(t *testing.T) {
@@ -148,7 +149,7 @@ func TestValidate_MultipleErrors(t *testing.T) {
 	}
 	// Should report multiple issues in one error.
 	msg := err.Error()
-	for _, want := range []string{"server.listeners", "session.cookie_name", "session.keys"} {
+	for _, want := range []string{"server.listeners", "session.keys"} {
 		if !strings.Contains(msg, want) {
 			t.Errorf("error missing %q: %s", want, msg)
 		}

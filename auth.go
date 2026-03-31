@@ -76,9 +76,11 @@ func newSessionProcessor(cfg Config) (endpoint.Processor, error) {
 		keys[k.ID] = []byte(k.Value)
 	}
 
-	sp, err := middleware.NewSessionProcessor(keyID, keys,
-		middleware.WithCookieName(cfg.Session.CookieName),
-	)
+	opts := []middleware.SessionProcessorOption{}
+	if cfg.Session.CookieName != "" {
+		opts = append(opts, middleware.WithCookieName(cfg.Session.CookieName))
+	}
+	sp, err := middleware.NewSessionProcessor(keyID, keys, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("pageserve: new session processor: %w", err)
 	}

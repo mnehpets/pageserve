@@ -74,7 +74,7 @@ extensibility.
 
 ```yaml
 session:
-  cookie_name: myapp_session   # required
+  cookie_name: myapp_session   # optional — omit to use the middleware default
   keys:
     - id: key-2025             # required — opaque identifier for key rotation
       env: SESSION_KEY_2025    # required — env var name holding the signing key
@@ -84,7 +84,7 @@ session:
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `cookie_name` | string | yes | Name of the session cookie |
+| `cookie_name` | string | no | Name of the session cookie. Omit to use the middleware default |
 | `keys` | list | yes | At least one signing key entry |
 | `keys[].id` | string | yes | Opaque key identifier used for rotation |
 | `keys[].env` | string | yes | Name of env var holding the key bytes (base64-encoded) |
@@ -347,7 +347,7 @@ oauth:
         env: OAUTH_CLIENT_SECRET
 
 session:
-  cookie_name: myapp_session
+  # cookie_name: myapp_session   # optional — omit to use the middleware default
   keys:
     - id: key-2025
       env: SESSION_KEY_2025

@@ -41,9 +41,6 @@ func validate(cfg Config, customHandlers map[string]HandlerFactory) error {
 			}
 		}
 	}
-	if cfg.Session.CookieName == "" {
-		errs = append(errs, "session.cookie_name is required")
-	}
 	if len(cfg.Session.Keys) == 0 {
 		errs = append(errs, "session.keys: at least one key is required")
 	}
