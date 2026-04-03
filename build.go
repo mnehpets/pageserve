@@ -6,6 +6,7 @@ import (
 	"maps"
 	"net/http"
 	"path"
+	"strings"
 	"time"
 
 	httpauth "github.com/mnehpets/http/auth"
@@ -140,6 +141,11 @@ func Build(cfg Config, opts ...BuildOption) (*Server, error) {
 	}
 	securityOpts := []middleware.SecurityHeadersOption{
 		middleware.WithCrossOriginPolicies(coop, coep, corp),
+	}
+	if cfg.CSP != nil && len(cfg.CSP.ExtraDirectives) > 0 {
+		const defaultCSP = "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+		csp := defaultCSP + "; " + strings.Join(cfg.CSP.ExtraDirectives, "; ")
+		securityOpts = append(securityOpts, middleware.WithCSP(csp))
 	}
 	if cfg.CORS != nil {
 		securityOpts = append(securityOpts, middleware.WithCORS(&middleware.CORSConfig{

@@ -14,6 +14,7 @@ startup from a separate `secrets.env` file (or any other source the caller provi
 | `oauth` | yes (if auth routes exist) | OAuth provider list |
 | `session` | yes (if auth routes exist) | Session cookie configuration |
 | `access` | no | Named email allow-list policies |
+| `csp` | no | Content-Security-Policy directive extensions |
 | `cors` | no | Cross-origin resource sharing settings |
 | `cross_origin` | no | Cross-origin response header overrides |
 | `site` | no | Site-level rendering configuration |
@@ -121,6 +122,37 @@ access:
 `*@example.com` matches all emails at `example.com`. Patterns are case-sensitive.
 
 Routes that reference an undefined policy name fail validation at startup.
+
+---
+
+## `csp`
+
+Extends the default Content-Security-Policy with additional directives. Omit this
+section to use the default policy unchanged.
+
+The default CSP is:
+```
+default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
+```
+
+Each entry in `extra_directives` is a complete CSP directive that is appended to
+the default. Existing default directives are not modified.
+
+```yaml
+csp:
+  extra_directives:
+    - "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+    - "script-src-elem 'self' https://unpkg.com 'unsafe-inline'"
+    - "style-src 'self' 'unsafe-inline'"
+```
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `extra_directives` | list of strings | yes | Complete CSP directives appended to the defaults |
+
+**Note on `unsafe-inline` and `unsafe-eval`:** these weaken script security. Use them
+only when loading third-party libraries (such as Tailwind CDN or Vue from unpkg.com)
+that require them, and scope them as narrowly as possible via `script-src-elem`.
 
 ---
 
@@ -362,6 +394,13 @@ site:
   base_url: https://example.com
   name: My Site
   lang: en
+
+# csp is optional; omit to use the default policy.
+# csp:
+#   extra_directives:
+#     - "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+#     - "script-src-elem 'self' https://unpkg.com 'unsafe-inline'"
+#     - "style-src 'self' 'unsafe-inline'"
 
 # cross_origin is optional; omit to use the defaults.
 # cross_origin:

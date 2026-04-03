@@ -19,6 +19,7 @@ type Config struct {
 	OAuth   OAuthConfig             `yaml:"oauth"`
 	Session SessionConfig           `yaml:"session"`
 	Access  map[string]AccessPolicy `yaml:"access"`
+	CSP         *CSPConfig              `yaml:"csp"`
 	CORS        *CORSConfig             `yaml:"cors"`
 	CrossOrigin *CrossOriginConfig      `yaml:"cross_origin"`
 	Site    SiteConfig              `yaml:"site"`
@@ -80,6 +81,14 @@ type SessionKey struct {
 // AccessPolicy is a named email allow-list policy.
 type AccessPolicy struct {
 	Allow []string `yaml:"allow"`
+}
+
+// CSPConfig holds Content-Security-Policy directive configuration.
+// The directives listed here are appended to the default CSP policy.
+type CSPConfig struct {
+	// ExtraDirectives is a list of additional CSP directives appended to the defaults.
+	// Each entry must be a complete directive, e.g. "script-src 'self' 'unsafe-inline'".
+	ExtraDirectives []string `yaml:"extra_directives"`
 }
 
 // CORSConfig holds cross-origin resource sharing settings applied globally to
